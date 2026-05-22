@@ -1,34 +1,64 @@
 import pandas as pd
-from sklearn.model_selection import train_test_split
+import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import confusion_matrix, classification_report
 
-# 1. Preparação dos Dados
-df = pd.read_csv('ObesityDataSet_raw_and_data_sinthetic.csv')
+# 1. Carregando os Dados (Já separados na sua estratégia de 75/25)
+df_train = pd.read_csv('treino.csv')
+df_test = pd.read_csv('teste.csv')
 
-# Separando as 16 características (X) da classe que queremos prever (y)
-X = df.drop('NObeyesdad', axis=1)
-y = df['NObeyesdad']
+# 2. Separando as características (X) do alvo (y)
+X_train = df_train.drop('NObeyesdad', axis=1)
+y_train = df_train['NObeyesdad']
 
-# Tratamento obrigatório no Python: Convertendo colunas de texto em números binários (One-Hot Encoding)
-X_codificado = pd.get_dummies(X)
+X_test = df_test.drop('NObeyesdad', axis=1)
+y_test = df_test['NObeyesdad']
 
-# Dividindo o banco: 75% para a floresta aprender, 25% para testarmos a matriz de confusão
-X_train, X_test, y_train, y_test = train_test_split(X_codificado, y, test_size=0.25, random_state=42)
+# 3. Tratamento de Variáveis Categóricas (One-Hot Encoding)
+X_train_codificado = pd.get_dummies(X_train)
+X_test_codificado = pd.get_dummies(X_test)
 
-# 2. O Treinamento da Floresta
-# n_estimators = cria 100 árvores.
-# n_jobs = -1 usa todos os núcleos do processador da sua máquina em paralelo (ótimo para acelerar o processo localmente)
-modelo_rf = RandomForestClassifier(n_estimators=100, criterion='gini', random_state=42, n_jobs=-1)
+# 4. O TRUQUE DE ALINHAMENTO: Forçando o teste a ter as mesmas colunas do treino
+X_test_codificado = X_test_codificado.reindex(columns=X_train_codificado.columns, fill_value=0)
 
-# A força bruta acontece aqui:
-modelo_rf.fit(X_train, y_train)
+# 5. Treinamento da Floresta (Força Bruta)
+modelo_rf = RandomForestClassifier(n_estimators=100, criterion='gini', random_state=1, n_jobs=-1)
+modelo_rf.fit(X_train_codificado, y_train)
 
-# 3. Previsão e Avaliação
-previsoes = modelo_rf.predict(X_test)
+# 6. Previsões e Avaliação
+previsoes = modelo_rf.predict(X_test_codificado)
 
 print("--- Matriz de Confusão ---")
 print(confusion_matrix(y_test, previsoes))
 
-print("\n--- Relatório por Classe (Precision / Recall) ---")
+print("\n--- Relatório por Classe ---")
 print(classification_report(y_test, previsoes))
+
+# ==========================================
+# 7. EXTRAÇÃO DE INTELIGÊNCIA: Importância de Atributos
+# ==========================================
+# Extraindo as notas matemáticas calculadas pelas 100 árvores
+importancias = modelo_rf.feature_importances_
+
+# Criando a tabela relacionando o nome da coluna com a sua nota
+tabela_importancia = pd.DataFrame({
+    'Atributo': X_train_codificado.columns,
+    'Importancia': importancias
+})
+
+# Ordenando do atributo mais forte para o mais fraco
+tabela_importancia = tabela_importancia.sort_values(by='Importancia', ascending=False)
+
+print("\n--- Top 10 Atributos Mais Importantes ---")
+print(tabela_importancia.head(10)) 
+
+# Gerando o Gráfico Visual
+plt.figure(figsize=(12, 8))
+# Desenhamos apenas os 15 mais fortes para o gráfico não ficar esmagado na tela
+top_15_atributos = tabela_importancia.head(15)
+plt.barh(top_15_atributos['Atributo'], top_15_atributos['Importancia'], color='skyblue')
+plt.gca().invert_yaxis() # Inverte o eixo Y para o campeão ficar no topo da tela
+plt.xlabel('Importância (Redução da Impureza de Gini)')
+plt.title('Top 15 Características Mais Importantes - Random Forest')
+plt.tight_layout()
+plt.show()
