@@ -25,7 +25,7 @@ colunas_comuns = X_treino_codificado.columns.intersection(X_teste_codificado.col
 X_treino_codificado = X_treino_codificado[colunas_comuns]
 X_teste_codificado = X_teste_codificado[colunas_comuns]
 
-modelo_dt = DecisionTreeClassifier(criterion='gini', max_depth=None, random_state=42)
+modelo_dt = DecisionTreeClassifier(criterion='gini', max_depth=10, random_state=42)
 modelo_dt.fit(X_treino_codificado, y_treino)
 
 previsoes = modelo_dt.predict(X_teste_codificado)
