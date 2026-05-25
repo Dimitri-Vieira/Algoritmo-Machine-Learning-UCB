@@ -1,11 +1,10 @@
 
-rm(list = ls()) # Limpa o ambiente
+rm(list = ls())
 library(dplyr)
 library(caTools)
 library(e1071)
 library(caret)
 
-# Lembre-se de ter o arquivo original na mesma pasta do script
 base_dados <- read.csv("ObesityDataSet_raw.csv", stringsAsFactors = FALSE)
 
 
