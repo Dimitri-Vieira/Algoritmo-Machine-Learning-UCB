@@ -34,26 +34,20 @@ y_teste = base_teste['NObeyesdad']
 
 
 print("\n--- 3. TREINAMENTO DO CLASSIFICADOR (NAIVE BAYES) ---")
-# Instanciando o modelo Gaussiano (ideal para nossos dados numéricos)
 classificador = GaussianNB()
 classificador.fit(X_treinamento, y_treinamento)
 
 
 print("\n--- 4. PREVISÕES E AVALIAÇÃO ---")
-# Fazendo as previsões com a base de teste
 previsoes = classificador.predict(X_teste)
 
-# Acurácia
 acuracia = accuracy_score(y_teste, previsoes)
 print(f"Acurácia Global: {acuracia:.4f} ({acuracia*100:.2f}%)\n")
 
-# Matriz de Confusão
 print("--- Matriz de Confusão ---")
-# pd.crosstab cria uma matriz visualmente mais bonita e parecida com a do R
 matriz_confusao = pd.crosstab(y_teste, previsoes, rownames=['Real'], colnames=['Previsto'], margins=True)
 print(matriz_confusao)
 
-# Relatório Completo (Acurácia, Precisão, Revocação e F1-Score)
 print("\n--- Relatório de Métricas (Exigência do Edital) ---")
 relatorio = classification_report(y_teste, previsoes)
 print(relatorio)
